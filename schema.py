@@ -18,35 +18,16 @@ __Author__ =  "Yoshihiro Tanaka <contact@cordea.jp>"
 __date__   =  "2016-09-18"
 
 import graphene
-
-class Book(graphene.ObjectType):
-    id = graphene.ID()
-    title = graphene.String()
-    description = graphene.String()
-    price = graphene.Int()
-    is_rent = graphene.Boolean()
-    is_sold = graphene.Boolean()
-
-class Stock(graphene.ObjectType):
-    id = graphene.ID()
-    count = graphene.Int()
-    books = graphene.List(Book)
-
-class SearchQuery(graphene.InputObjectType):
-    id = graphene.ID(required=False)
-    name = graphene.String(required=False)
+import data_manager as manager
+from model import Book, Stock, SearchQuery, IResult
 
 class Arrival(graphene.Mutation):
-    success = graphene.Boolean()
-    reason = graphene.String()
-    book = graphene.Field(Book)
-
     @staticmethod
     def mutate(cls, args, context, info):
-        print args.get('title')
-        print args.get('description')
-        print args.get('price')
-        return Arrival(success=True, reason="", book=Book())
+        return manager.arrival(args).to_model(Arrival)
+
+    class Meta:
+        interfaces = (IResult, )
 
     class Input:
         title = graphene.String(required=True)
@@ -54,27 +35,23 @@ class Arrival(graphene.Mutation):
         price = graphene.Int(required=True)
 
 class Sold(graphene.Mutation):
-    success = graphene.Boolean()
-    reason = graphene.String()
-    book = graphene.Field(Book)
-
     @staticmethod
     def mutate(cls, args, context, info):
-        print args.get('id')
-        return Sold(success=True, reason="", book=Book())
+        return manager.sold(args.get('id')).to_model(Sold)
+
+    class Meta:
+        interfaces = (IResult, )
 
     class Input:
         id = graphene.ID(required=True)
 
 class Rent(graphene.Mutation):
-    success = graphene.Boolean()
-    reason = graphene.String()
-    book = graphene.Field(Book)
-
     @staticmethod
     def mutate(cls, args, context, info):
-        print args.get('id')
-        return Rent(success=True, reason="", book=Book())
+        return manager.rent(args.get('id')).to_model(Rent)
+
+    class Meta:
+        interfaces = (IResult, )
 
     class Input:
         id = graphene.ID(required=True)
@@ -87,7 +64,7 @@ class Query(graphene.ObjectType):
         s = args.get('search')
         if s and s['id']:
             uid = s['id']
-        return Stock(id=uid, count=0, books=[])
+        return manager.stock(args)
 
 class Mutation(graphene.ObjectType):
     arrival = Arrival.Field()
